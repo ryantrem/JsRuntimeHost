@@ -21,4 +21,10 @@ namespace Napi
         napi_env env_ptr{env};
         return env_ptr->context;
     }
+
+    void ForceGarbageCollection(Napi::Env env)
+    {
+        napi_env env_ptr{env};
+        JSGarbageCollect(env_ptr->context);
+    }
 }

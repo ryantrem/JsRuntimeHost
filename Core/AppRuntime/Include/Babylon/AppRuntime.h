@@ -23,6 +23,8 @@ namespace Babylon
 
         void Dispatch(Dispatchable<void(Napi::Env)> callback);
 
+        void ForceGarbageCollection(Napi::Env);
+
     private:
         // These three methods are the mechanism by which platform- and JavaScript-specific
         // code can be "injected" into the execution of the JavaScript thread. These three

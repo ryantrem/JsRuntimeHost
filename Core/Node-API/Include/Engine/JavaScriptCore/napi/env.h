@@ -12,4 +12,6 @@ namespace Napi
   Napi::Value Eval(Napi::Env env, const char* source, const char* sourceUrl);
 
   JSGlobalContextRef GetContext(Napi::Env);
+
+  void ForceGarbageCollection(Napi::Env);
 }

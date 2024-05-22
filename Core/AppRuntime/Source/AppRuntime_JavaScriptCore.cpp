@@ -15,4 +15,9 @@ namespace Babylon
         // Detach must come after JSGlobalContextRelease since it triggers finalizers which require env.
         Napi::Detach(env);
     }
+
+    void AppRuntime::ForceGarbageCollection(Napi::Env env)
+    {
+        Napi::ForceGarbageCollection(env);
+    }
 }
