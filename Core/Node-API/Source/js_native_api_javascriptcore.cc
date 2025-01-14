@@ -485,16 +485,18 @@ namespace {
    public:
       static napi_status GetObjectId(napi_env env, napi_value object, std::uintptr_t* id)
       {
-          *id = 0;
-
-          if (JSObjectHasProperty(env->context, ToJSObject(env, object), JSString("__finalizerHook")))
-          {
-              JSValueRef exception{};
-              JSValueRef finalizerHook{JSObjectGetProperty(env->context, ToJSObject(env, object), JSString("__finalizerHook"), &exception)};
-              CHECK_JSC(env, exception);
-              auto referenceInfo{ReferenceInfo::Get<ReferenceInfo>(JSValueToObject(env->context, finalizerHook, &exception))};
-              *id = reinterpret_cast<std::uintptr_t>(referenceInfo);
-          }
+          auto referenceInfo{ReferenceInfo::FindInPrototypeChain<ReferenceInfo>(env->context, ToJSObject(env, object))};
+          *id = referenceInfo == nullptr ? 0 : referenceInfo->GetObjectId();
+//          *id = 0;
+//
+//          if (JSObjectHasProperty(env->context, ToJSObject(env, object), JSString("__finalizerHook")))
+//          {
+//              JSValueRef exception{};
+//              JSValueRef finalizerHook{JSObjectGetProperty(env->context, ToJSObject(env, object), JSString("__finalizerHook"), &exception)};
+//              CHECK_JSC(env, exception);
+//              auto referenceInfo{ReferenceInfo::Get<ReferenceInfo>(JSValueToObject(env->context, finalizerHook, &exception))};
+//              *id = reinterpret_cast<std::uintptr_t>(referenceInfo);
+//          }
 
 //          napi_value finalizerHookName{};
 //          napi_create_string_utf8(env, "__finalizerHook", 15, &finalizerHookName);
@@ -523,23 +525,23 @@ namespace {
 //              return napi_ok;
 //          }
 //          
-          ReferenceInfo* info = new ReferenceInfo(env);
+          ReferenceInfo* info = new ReferenceInfo(env, object);
       if (info == nullptr) {
         return napi_set_last_error(env, napi_generic_failure);
       }
 
       JSObjectRef prototype{JSObjectMake(env->context, info->_class, info)};
-//      JSObjectSetPrototype(env->context, prototype, JSObjectGetPrototype(env->context, ToJSObject(env, object)));
-//      JSObjectSetPrototype(env->context, ToJSObject(env, object), prototype);
+      JSObjectSetPrototype(env->context, prototype, JSObjectGetPrototype(env->context, ToJSObject(env, object)));
+      JSObjectSetPrototype(env->context, ToJSObject(env, object), prototype);
 
-        JSObjectSetProperty(
-          env->context,
-          ToJSObject(env, object),
-          JSString("__finalizerHook"),
-          prototype,
-          kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontEnum | kJSPropertyAttributeDontDelete,
-          &exception);
-        CHECK_JSC(env, exception);
+//        JSObjectSetProperty(
+//          env->context,
+//          ToJSObject(env, object),
+//          JSString("__finalizerHook"),
+//          prototype,
+//          kJSPropertyAttributeReadOnly | kJSPropertyAttributeDontEnum | kJSPropertyAttributeDontDelete,
+//          &exception);
+//        CHECK_JSC(env, exception);
 
       info->AddFinalizer(finalizer);
           
@@ -556,9 +558,10 @@ namespace {
    private:
 //      static uint64_t _lastObjectId;
 //      uint64_t _objectId;
-    ReferenceInfo(napi_env env)
+      napi_value _value;
+      ReferenceInfo(napi_env env, napi_value value)
 //      : _objectId{_lastObjectId++}, BaseInfoT{env, "Native (Reference)"} {
-      : BaseInfoT{env, "Native (Reference)"} {
+      : _value{value}, BaseInfoT{env, "Native (Reference)"} {
     }
   };
 
@@ -729,6 +732,7 @@ struct napi_ref__ {
 //      if (existingEntry == env->active_ref_values.end() || existingEntry->second)
 
       CHECK_NAPI(ReferenceInfo::GetObjectId(env, _value, &_objectId));
+      log(std::to_string(_objectId));
       if (_objectId == 0) {
           log("added finalizer");
         auto napi_result = ReferenceInfo::Initialize(env, _value, [value = _value, data = _data, thisPtr = reinterpret_cast<std::uintptr_t>(this)](ReferenceInfo* info) {
@@ -759,6 +763,12 @@ struct napi_ref__ {
           CHECK_NAPI(ReferenceInfo::GetObjectId(env, _value, &_objectId));
           assert(_objectId);
           env->active_ref_values[_value] = _objectId;
+          log(std::to_string(_objectId));
+      } else {
+          if (env->active_ref_values.find(_value) == env->active_ref_values.end()) {
+              ReferenceInfo::GetObjectId(env, _value, &_objectId);
+          }
+          assert(env->active_ref_values.find(_value) != env->active_ref_values.end());
       }
 
     //if (_count != 0) {
@@ -818,6 +828,7 @@ struct napi_ref__ {
       {
           std::uintptr_t objectId{};
           if (ReferenceInfo::GetObjectId(env, _value, &objectId) == napi_ok && objectId == _objectId) {
+              log("return valid value");
               return _value;
           }
           else
