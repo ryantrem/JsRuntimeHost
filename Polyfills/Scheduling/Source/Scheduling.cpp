@@ -7,6 +7,9 @@ namespace
     constexpr auto JS_SET_INTERVAL_NAME = "setInterval";
     constexpr auto JS_CLEAR_INTERVAL_NAME = "clearInterval";
 
+    constexpr auto JS_PERFORMANCE_NAME = "performance";
+    constexpr auto JS_NOW_NAME = "now";
+
     Napi::Value SetTimeout(const Napi::CallbackInfo& info, Babylon::Polyfills::Internal::TimeoutDispatcher& timeoutDispatcher, bool repeat)
     {
         auto function =
@@ -69,6 +72,23 @@ namespace Babylon::Polyfills::Scheduling
                         ClearTimeout(info, *timeoutDispatcher);
                     },
                     JS_CLEAR_INTERVAL_NAME));
+        }
+
+        if (global.Get(JS_PERFORMANCE_NAME).IsUndefined())
+        {
+            auto performance = Napi::Object::New(env);
+            global.Set(JS_PERFORMANCE_NAME, performance);
+            if (performance.Get(JS_NOW_NAME).IsUndefined())
+            {
+                const auto start = std::chrono::steady_clock::now();
+                performance.Set(JS_NOW_NAME,
+                    Napi::Function::New(
+                        env, [start](const Napi::CallbackInfo& info) {
+                            const auto now = std::chrono::steady_clock::now();
+                            return Napi::Value::From(info.Env(), std::chrono::duration<double, std::milli>(now - start).count());
+                        },
+                        JS_NOW_NAME));
+            }
         }
     }
 }
