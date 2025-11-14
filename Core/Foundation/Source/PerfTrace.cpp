@@ -15,7 +15,7 @@ namespace Babylon
     {
         void SetLevel(Level level)
         {
-            switch(level)
+            switch (level)
             {
                 case Level::None:
                     arcana::trace_region::disable();
@@ -33,7 +33,11 @@ namespace Babylon
         class Handle::Impl
         {
         public:
-            Impl(const char* name) : m_region(name) {}
+            Impl(const char* name)
+                : m_region(name)
+            {
+            }
+
         private:
             arcana::trace_region m_region;
         };
