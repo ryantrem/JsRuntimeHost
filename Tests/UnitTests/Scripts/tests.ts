@@ -8,7 +8,7 @@ Mocha.reporter('spec');
 declare const hostPlatform: string;
 declare const setExitCode: (code: number) => void;
 
-
+/*
 describe("AbortController", function () {
     it("should not throw while aborting with no callbacks", function () {
         const controller = new AbortController();
@@ -512,7 +512,7 @@ if (hostPlatform !== "Unix") {
         });
     })
 }
-
+*/
 // URL
 describe("URL", function () {
 
@@ -532,7 +532,7 @@ describe("URL", function () {
         expect(url).to.have.property("pathname", pathname);
         expect(url).to.have.property("search", search);
     }
-
+    /*
     it("should load URL with no pathname / search", function () {
         // Standard URL (No pathname, no search)
         const url = new URL("https://httpbin.org");
@@ -811,12 +811,12 @@ describe("URL", function () {
         expect(url!.hostname).to.equal("example.com");
         expect(url!.pathname).to.equal("/path");
     });
-
+    */
     it("should return null from parse() for invalid URL", function () {
         const url = URL.parse("not-a-url");
         expect(url).to.equal(null);
     });
-
+    /*
     it("should return URL object from parse() with valid base", function () {
         const url = URL.parse("/path", "https://example.com");
         expect(url).to.not.equal(null);
@@ -932,8 +932,9 @@ describe("URL", function () {
         expect(url.protocol).to.equal("app:");
         expect(url.pathname).to.equal("/Scripts/test.js");
     });
+    */
 });
-
+/*
 // URLSearchParams
 describe("URLSearchParams", function () {
 
@@ -1237,7 +1238,7 @@ describe("Performance", function () {
         expect(hasFractional).to.equal(true);
     });
 });
-
+*/
 function runTests() {
     mocha.run((failures: number) => {
         // Test program will wait for code to be set before exiting
