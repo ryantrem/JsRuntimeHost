@@ -6,6 +6,7 @@
 
 #include <napi/utilities.h>
 
+#include <atomic>
 #include <memory>
 #include <functional>
 #include <exception>
@@ -61,6 +62,7 @@ namespace Babylon
         // extra logic around the invocation of a dispatched callback.
         void Execute(Dispatchable<void()> callback);
 
+        std::atomic<bool> m_destructing{false};
         std::unique_ptr<WorkQueue> m_workQueue;
         Options m_options;
     };
